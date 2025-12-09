@@ -1,0 +1,38 @@
+# ============ Python ============
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ============ Virtual Environments ============
+venv/
+env/
+.venv/
+
+# ============ IDE / Editor Files ============
+.idea/
+.vscode/
+*.iml
+
+# ============ OS Junk ============
+.DS_Store
+Thumbs.db
+
+# ============ Logs / Generated Files ============
+logs/
+*.log
+
+# ============ Model + Data Storage (future-proofing) ============
+Data/scientific_corpus/
+Data/review_history/
+Data/reasoning_logs/
+Data/citation_databases/
+Data/replication_datasets/
+
+# Avoid committing large or sensitive files until explicitly added
+*.pdf
+*.csv
+*.zip
+*.json
+
+# Will later be replaced with explicit dataset versioning

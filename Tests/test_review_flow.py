@@ -87,3 +87,30 @@ def test_review_flow_with_empty_text():
 
     # Methodology: no sample sizes
     assert meth["sample_size"]["count"] == 0
+
+def test_methodology_rescues_stats_when_sample_sizes_present():
+    """
+    If no explicit stats are detected but sample sizes are present,
+    stats.has_statistical_content should be True and rigor >= 0.25
+    due to the cross-wiring logic.
+    """
+    sample_text = """
+    We conducted a large survey with n = 200 participants in the first wave
+    and n = 180 participants in the second wave.
+    The study was preregistered on OSF.io and focused on descriptive results.
+    No hypothesis tests or p-values are reported here.
+    """
+
+    engine = ReviewEngine()
+    result = engine.review_paper(sample_text)
+
+    stats = result["statistics"]
+    meth = result["methodology"]
+
+    # Methodology should see at least one sample size
+    assert meth["sample_size"]["count"] >= 1
+
+    # Even with no p-values, stats should be treated as present
+    assert stats["has_statistical_content"] is True
+    assert stats["p_values"]["count"] == 0
+    assert stats["overall_rigor_score"] >= 0.25

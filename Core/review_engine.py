@@ -27,6 +27,7 @@ class ReviewEngine:
           2) rule-based bias analysis
           3) statistical rigor analysis
           4) methodology / design analysis
+          5) cross-wiring: methodology can upgrade stats flags
         and returns a structured result + reasoning trace.
         """
         self.trace.add_step("load_paper", "Loaded paper text into review engine.")
@@ -51,8 +52,22 @@ class ReviewEngine:
             },
         )
 
-        # 3) Statistical rigor analysis
+        # 3) Statistical rigor analysis (initial)
         stats_result = self.statistical_analyzer.analyze(paper_text)
+
+        # 4) Methodology / design analysis
+        methodology_result = self.methodology_validator.analyze(paper_text)
+
+        # 5) Cross-wiring: upgrade stats if methodology clearly shows study-like structure
+        sample_size_count = methodology_result["sample_size"]["count"]
+        if not stats_result["has_statistical_content"] and sample_size_count >= 1:
+            # Treat this as at least minimally statistical, since there are explicit Ns
+            stats_result["has_statistical_content"] = True
+            # Ensure a minimum rigor floor to reflect this
+            if stats_result["overall_rigor_score"] < 0.25:
+                stats_result["overall_rigor_score"] = 0.25
+
+        # Now record trace entries using the possibly-upgraded stats_result
         self.trace.add_step(
             "statistical_analysis",
             f"Overall rigor score={stats_result['overall_rigor_score']:.4f}",
@@ -63,14 +78,12 @@ class ReviewEngine:
             },
         )
 
-        # 4) Methodology / design analysis
-        methodology_result = self.methodology_validator.analyze(paper_text)
         self.trace.add_step(
             "methodology_analysis",
             f"Overall methodology score="
             f"{methodology_result['overall_methodology_score']:.4f}",
             metadata={
-                "sample_size_count": methodology_result["sample_size"]["count"],
+                "sample_size_count": sample_size_count,
                 "small_sample_warning": methodology_result["sample_size"]["small_sample_warning"],
                 "has_control_group": methodology_result["control_and_blinding"]["has_control_group"],
                 "has_randomization": methodology_result["design"]["has_randomization"],

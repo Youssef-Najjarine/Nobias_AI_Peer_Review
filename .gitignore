@@ -21,6 +21,7 @@ Thumbs.db
 # ============ Logs / Generated Files ============
 logs/
 *.log
+reports/
 
 # ============ Model + Data Storage (future-proofing) ============
 Data/scientific_corpus/

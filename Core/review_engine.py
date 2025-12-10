@@ -5,6 +5,7 @@ from Core.bias_detector import BiasDetector
 from Core.statistical_analyzer import StatisticalAnalyzer
 from Core.methodology_validator import MethodologyValidator
 from Core.citation_validator import CitationValidator
+from Core.plagiarism_checker import PlagiarismChecker
 from Core.reasoning_trace import ReasoningTrace
 
 
@@ -15,7 +16,8 @@ class ReviewEngine:
         self.bias_detector = BiasDetector()
         self.statistical_analyzer = StatisticalAnalyzer()
         self.methodology_validator = MethodologyValidator()
-        self.citation_validator = CitationValidator()   # <-- NEW
+        self.citation_validator = CitationValidator()
+        self.plagiarism_checker = PlagiarismChecker()   # <-- NEW
 
         # Reasoning trace logger (this is what was missing)
         self.trace = ReasoningTrace()
@@ -30,6 +32,7 @@ class ReviewEngine:
           4) methodology / design analysis
           5) cross-wiring: methodology can upgrade stats flags
           6) citation / reference analysis
+          7) plagiarism / redundancy analysis
         and returns a structured result + reasoning trace.
         """
         # --- 0) initial trace entry ---
@@ -71,6 +74,9 @@ class ReviewEngine:
         # 6) Citation / reference analysis
         citation_result = self.citation_validator.analyze(paper_text)
 
+        # 7) Plagiarism / redundancy analysis
+        plagiarism_result = self.plagiarism_checker.analyze(paper_text)
+
         # --- Trace entries using final values ---
         self.trace.add_step(
             "statistical_analysis",
@@ -105,11 +111,22 @@ class ReviewEngine:
             },
         )
 
+        self.trace.add_step(
+            "plagiarism_analysis",
+            f"Overall plagiarism suspicion score="
+            f"{plagiarism_result['overall_plagiarism_suspicion_score']:.4f}",
+            metadata={
+                "ngram_repetition_ratio": plagiarism_result["ngram_repetition_ratio"],
+                "repeated_sentence_ratio": plagiarism_result["repeated_sentence_ratio"],
+            },
+        )
+
         return {
             "integrity": integrity_result,
             "bias": bias_result,
             "statistics": stats_result,
             "methodology": methodology_result,
             "citations": citation_result,
+            "plagiarism": plagiarism_result,    # <-- NEW
             "trace": self.trace.export(),
         }

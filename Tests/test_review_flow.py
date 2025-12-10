@@ -41,12 +41,14 @@ def test_review_flow_with_nonempty_text():
     assert "methodology" in result
     assert "citations" in result          # <-- NEW
     assert "trace" in result
+    assert "plagiarism" in result
 
     integrity = result["integrity"]
     bias = result["bias"]
     stats = result["statistics"]
     meth = result["methodology"]
     citations = result["citations"]       # <-- NEW
+    plag = result["plagiarism"]
 
     # Integrity should see non-empty text and some positive word count
     assert integrity["is_empty"] is False
@@ -72,6 +74,8 @@ def test_review_flow_with_nonempty_text():
     # Citations: score should be in [0, 1]
     assert 0.0 <= citations["overall_citation_quality_score"] <= 1.0
 
+    # Plagiarism: score should be in [0, 1]
+    assert 0.0 <= plag["overall_plagiarism_suspicion_score"] <= 1.0
 
 def test_review_flow_with_empty_text():
     """
@@ -85,7 +89,7 @@ def test_review_flow_with_empty_text():
     stats = result["statistics"]
     meth = result["methodology"]
     citations = result["citations"]       # <-- NEW
-
+    plag = result["plagiarism"]
     # Integrity: should mark as empty and have zero words
     assert integrity["is_empty"] is True
     assert integrity["word_count"] == 0
@@ -101,6 +105,11 @@ def test_review_flow_with_empty_text():
     assert citations["estimated_reference_count"] == 0
     assert citations["doi"]["count"] == 0
     assert citations["urls"]["count"] == 0
+
+    # Plagiarism: empty text should look perfectly clean
+    assert plag["ngram_repetition_ratio"] == 0.0
+    assert plag["repeated_sentence_ratio"] == 0.0
+    assert plag["overall_plagiarism_suspicion_score"] == 0.0
 
 
 def test_methodology_rescues_stats_when_sample_sizes_present():
@@ -174,6 +183,7 @@ def test_report_generator_creates_markdown(tmp_path):
     assert "## Bias & Language" in content
     assert "## Statistical Rigor" in content
     assert "## Methodology & Design" in content
-    assert "## Citations & References" in content   # <-- NEW
+    assert "## Citations & References" in content
+    assert "## Plagiarism / Redundancy Signals" in content
     assert "## Integrity Checks" in content
     assert "## Reasoning Trace (first steps)" in content

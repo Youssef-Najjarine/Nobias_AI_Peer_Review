@@ -19,8 +19,9 @@ class ReportGenerator:
         bias = result["bias"]
         stats = result["statistics"]
         meth = result["methodology"]
-        citations = result["citations"]          # <-- NEW
+        citations = result["citations"]
         trace: List[Dict[str, Any]] = result["trace"]
+        plag = result["plagiarism"]
 
         # Pull some handy pieces
         word_count = integrity["word_count"]
@@ -46,6 +47,10 @@ class ReportGenerator:
         has_ref_section = citations["has_references_section"]
         est_ref_count = citations["estimated_reference_count"]
         cit_score = citations["overall_citation_quality_score"]
+        # Plagiarism / redundancy pieces
+        plag_score = plag["overall_plagiarism_suspicion_score"]
+        ngram_rep = plag["ngram_repetition_ratio"]
+        sent_rep = plag["repeated_sentence_ratio"]
 
         lines: List[str] = []
 
@@ -56,6 +61,11 @@ class ReportGenerator:
         lines.append(f"- **Bias score**: `{bias_score:.3f}`  (0 = neutral, 1 = highly biased)")
         lines.append(f"- **Statistical rigor score**: `{stats_rigor:.3f}`  (0 = none, 1 = high)")
         lines.append(f"- **Methodology score**: `{meth_score:.3f}`  (0 = weak, 1 = strong)")
+        lines.append(
+            f"- **Plagiarism / redundancy suspicion score**: `{plag_score:.3f}`  "
+            f"(0 = clean, 1 = highly repetitive)"
+        )
+
         lines.append(f"- **Word count**: `{word_count}`  "
                      f"(passes minimum length: `{passes_min_len}`)")
         lines.append("")
@@ -114,6 +124,27 @@ class ReportGenerator:
         )
         lines.append(
             f"- Overall citation quality score: `{cit_score:.3f}`"
+        )
+        lines.append("")
+        # Plagiarism / redundancy detail
+        lines.append("## Plagiarism / Redundancy Signals\n")
+        lines.append(
+            f"- Overall suspicion score: `{plag_score:.3f}` "
+            f"(0 = clean, 1 = highly repetitive)"
+        )
+        lines.append(
+            f"- N-gram repetition ratio (5-grams): `{ngram_rep:.4f}` "
+            f"(0 = unique, 1 = extremely repetitive)"
+        )
+        lines.append(
+            f"- Repeated sentence ratio: `{sent_rep:.4f}` "
+            f"(0 = no repeated sentences, 1 = mostly repeats)"
+        )
+        lines.append(
+            f"- Top repeated 5-grams: {plag['top_repeated_ngrams']}"
+        )
+        lines.append(
+            f"- Top repeated sentences: {plag['top_repeated_sentences']}"
         )
         lines.append("")
 

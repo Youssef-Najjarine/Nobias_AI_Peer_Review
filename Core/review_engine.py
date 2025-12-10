@@ -1,35 +1,38 @@
 # Core/review_engine.py
 
-from Core.reasoning_trace import ReasoningTrace
 from Core.integrity_verifier import IntegrityVerifier
 from Core.bias_detector import BiasDetector
 from Core.statistical_analyzer import StatisticalAnalyzer
 from Core.methodology_validator import MethodologyValidator
+from Core.citation_validator import CitationValidator
+from Core.reasoning_trace import ReasoningTrace
 
 
 class ReviewEngine:
-    """
-    Central orchestrator for the Nobias AI Peer Review process.
-    """
-
     def __init__(self):
-        self.trace = ReasoningTrace()
+        # Core analysis components
         self.integrity_verifier = IntegrityVerifier()
         self.bias_detector = BiasDetector()
         self.statistical_analyzer = StatisticalAnalyzer()
         self.methodology_validator = MethodologyValidator()
+        self.citation_validator = CitationValidator()   # <-- NEW
+
+        # Reasoning trace logger (this is what was missing)
+        self.trace = ReasoningTrace()
 
     def review_paper(self, paper_text: str) -> dict:
         """
         Main entry point for running a review on a paper's text.
-        Currently performs:
+        Performs:
           1) basic integrity checks
           2) rule-based bias analysis
           3) statistical rigor analysis
           4) methodology / design analysis
           5) cross-wiring: methodology can upgrade stats flags
+          6) citation / reference analysis
         and returns a structured result + reasoning trace.
         """
+        # --- 0) initial trace entry ---
         self.trace.add_step("load_paper", "Loaded paper text into review engine.")
 
         # 1) Integrity check
@@ -61,13 +64,14 @@ class ReviewEngine:
         # 5) Cross-wiring: upgrade stats if methodology clearly shows study-like structure
         sample_size_count = methodology_result["sample_size"]["count"]
         if not stats_result["has_statistical_content"] and sample_size_count >= 1:
-            # Treat this as at least minimally statistical, since there are explicit Ns
             stats_result["has_statistical_content"] = True
-            # Ensure a minimum rigor floor to reflect this
             if stats_result["overall_rigor_score"] < 0.25:
                 stats_result["overall_rigor_score"] = 0.25
 
-        # Now record trace entries using the possibly-upgraded stats_result
+        # 6) Citation / reference analysis
+        citation_result = self.citation_validator.analyze(paper_text)
+
+        # --- Trace entries using final values ---
         self.trace.add_step(
             "statistical_analysis",
             f"Overall rigor score={stats_result['overall_rigor_score']:.4f}",
@@ -90,10 +94,22 @@ class ReviewEngine:
             },
         )
 
+        self.trace.add_step(
+            "citation_analysis",
+            f"Overall citation quality score="
+            f"{citation_result['overall_citation_quality_score']:.4f}",
+            metadata={
+                "has_references_section": citation_result["has_references_section"],
+                "estimated_reference_count": citation_result["estimated_reference_count"],
+                "doi_count": citation_result["doi"]["count"],
+            },
+        )
+
         return {
             "integrity": integrity_result,
             "bias": bias_result,
             "statistics": stats_result,
             "methodology": methodology_result,
+            "citations": citation_result,
             "trace": self.trace.export(),
         }

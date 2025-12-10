@@ -19,6 +19,7 @@ class ReportGenerator:
         bias = result["bias"]
         stats = result["statistics"]
         meth = result["methodology"]
+        citations = result["citations"]          # <-- NEW
         trace: List[Dict[str, Any]] = result["trace"]
 
         # Pull some handy pieces
@@ -40,6 +41,11 @@ class ReportGenerator:
         has_randomization = meth["design"]["has_randomization"]
         has_prereg = meth["transparency"]["has_preregistration"]
         has_data_sharing = meth["transparency"]["has_data_sharing"]
+
+        # Citation pieces
+        has_ref_section = citations["has_references_section"]
+        est_ref_count = citations["estimated_reference_count"]
+        cit_score = citations["overall_citation_quality_score"]
 
         lines: List[str] = []
 
@@ -84,6 +90,31 @@ class ReportGenerator:
         lines.append(f"- Has randomization: `{has_randomization}`")
         lines.append(f"- Has preregistration: `{has_prereg}`")
         lines.append(f"- Has data sharing: `{has_data_sharing}`")
+        lines.append("")
+
+        # 🔹 NEW: Citations detail
+        lines.append("## Citations & References\n")
+        lines.append(f"- Has references section: `{has_ref_section}`")
+        lines.append(f"- Estimated reference count: `{est_ref_count}`")
+        lines.append(
+            f"- DOI count: `{citations['doi']['count']}` "
+            f"(examples: {citations['doi']['examples']})"
+        )
+        lines.append(
+            f"- URL count: `{citations['urls']['count']}` "
+            f"(examples: {citations['urls']['examples']})"
+        )
+        lines.append(
+            f"- In-text citation count: `{citations['in_text_citations']['count']}` "
+            f"(examples: {citations['in_text_citations']['examples']})"
+        )
+        lines.append(
+            f"- Bracket citation count: `{citations['bracket_citations']['count']}` "
+            f"(examples: {citations['bracket_citations']['examples']})"
+        )
+        lines.append(
+            f"- Overall citation quality score: `{cit_score:.3f}`"
+        )
         lines.append("")
 
         # Integrity detail

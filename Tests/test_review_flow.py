@@ -6,7 +6,6 @@ from Core.review_engine import ReviewEngine
 from Core.report_generator import ReportGenerator
 
 
-
 def test_review_flow_with_nonempty_text():
     """
     Full pipeline sanity test on a non-trivial sample text.
@@ -40,12 +39,14 @@ def test_review_flow_with_nonempty_text():
     assert "bias" in result
     assert "statistics" in result
     assert "methodology" in result
+    assert "citations" in result          # <-- NEW
     assert "trace" in result
 
     integrity = result["integrity"]
     bias = result["bias"]
     stats = result["statistics"]
     meth = result["methodology"]
+    citations = result["citations"]       # <-- NEW
 
     # Integrity should see non-empty text and some positive word count
     assert integrity["is_empty"] is False
@@ -68,6 +69,9 @@ def test_review_flow_with_nonempty_text():
     assert meth["design"]["has_randomization"] is True
     assert meth["control_and_blinding"]["has_control_group"] is True
 
+    # Citations: score should be in [0, 1]
+    assert 0.0 <= citations["overall_citation_quality_score"] <= 1.0
+
 
 def test_review_flow_with_empty_text():
     """
@@ -80,6 +84,7 @@ def test_review_flow_with_empty_text():
     integrity = result["integrity"]
     stats = result["statistics"]
     meth = result["methodology"]
+    citations = result["citations"]       # <-- NEW
 
     # Integrity: should mark as empty and have zero words
     assert integrity["is_empty"] is True
@@ -91,6 +96,12 @@ def test_review_flow_with_empty_text():
 
     # Methodology: no sample sizes
     assert meth["sample_size"]["count"] == 0
+
+    # Citations: empty text should yield no references
+    assert citations["estimated_reference_count"] == 0
+    assert citations["doi"]["count"] == 0
+    assert citations["urls"]["count"] == 0
+
 
 def test_methodology_rescues_stats_when_sample_sizes_present():
     """
@@ -118,6 +129,7 @@ def test_methodology_rescues_stats_when_sample_sizes_present():
     assert stats["has_statistical_content"] is True
     assert stats["p_values"]["count"] == 0
     assert stats["overall_rigor_score"] >= 0.25
+
 
 def test_report_generator_creates_markdown(tmp_path):
     """
@@ -162,5 +174,6 @@ def test_report_generator_creates_markdown(tmp_path):
     assert "## Bias & Language" in content
     assert "## Statistical Rigor" in content
     assert "## Methodology & Design" in content
+    assert "## Citations & References" in content   # <-- NEW
     assert "## Integrity Checks" in content
     assert "## Reasoning Trace (first steps)" in content

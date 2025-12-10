@@ -1,6 +1,10 @@
 # Tests/test_review_flow.py
 
+from pathlib import Path
+
 from Core.review_engine import ReviewEngine
+from Core.report_generator import ReportGenerator
+
 
 
 def test_review_flow_with_nonempty_text():
@@ -114,3 +118,49 @@ def test_methodology_rescues_stats_when_sample_sizes_present():
     assert stats["has_statistical_content"] is True
     assert stats["p_values"]["count"] == 0
     assert stats["overall_rigor_score"] >= 0.25
+
+def test_report_generator_creates_markdown(tmp_path):
+    """
+    Ensures the ReportGenerator can create a markdown report from a review
+    result, and that the report includes the main sections.
+    Uses pytest's tmp_path fixture so we don't pollute the real reports/ dir.
+    """
+    sample_text = """
+    This groundbreaking and unprecedented study clearly proves our theory.
+    The renowned and prestigious group behind this work comes from elite institutions.
+    It is obvious that the results are robust.
+
+    We conducted a randomized controlled experiment with a treatment and control group.
+    Participants were randomly assigned to conditions and the study was double-blind.
+    The sample size was n = 50 in the treatment group and n = 48 in the control group.
+
+    We conducted a series of t-tests and a one-way ANOVA.
+    The main effect was significant (p < 0.01).
+    A 95% CI [0.5, 1.0] was computed for the primary effect size.
+    We additionally report Cohen's d and performed a power analysis.
+
+    The protocol was preregistered on OSF.io and the anonymized data
+    are available in a public repository.
+    """
+
+    engine = ReviewEngine()
+    result = engine.review_paper(sample_text)
+
+    # Use a temporary directory for report output
+    report_generator = ReportGenerator(output_dir=tmp_path)
+    paper_name = "unit_test_paper"
+    out_path: Path = report_generator.save_markdown(paper_name, result)
+
+    # File should exist
+    assert out_path.exists()
+
+    content = out_path.read_text(encoding="utf-8")
+
+    # Basic sanity checks on structure
+    assert f"# Nobias AI Peer Review – {paper_name}" in content
+    assert "## Summary Scores" in content
+    assert "## Bias & Language" in content
+    assert "## Statistical Rigor" in content
+    assert "## Methodology & Design" in content
+    assert "## Integrity Checks" in content
+    assert "## Reasoning Trace (first steps)" in content

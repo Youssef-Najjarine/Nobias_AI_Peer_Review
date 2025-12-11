@@ -6,6 +6,7 @@ from Core.statistical_analyzer import StatisticalAnalyzer
 from Core.methodology_validator import MethodologyValidator
 from Core.citation_validator import CitationValidator
 from Core.plagiarism_checker import PlagiarismChecker
+from Core.fraud_detector import FraudDetector
 from Core.reasoning_trace import ReasoningTrace
 
 
@@ -17,9 +18,10 @@ class ReviewEngine:
         self.statistical_analyzer = StatisticalAnalyzer()
         self.methodology_validator = MethodologyValidator()
         self.citation_validator = CitationValidator()
-        self.plagiarism_checker = PlagiarismChecker()   # <-- NEW
+        self.plagiarism_checker = PlagiarismChecker()
+        self.fraud_detector = FraudDetector()   # <-- NEW
 
-        # Reasoning trace logger (this is what was missing)
+        # Reasoning trace logger
         self.trace = ReasoningTrace()
 
     def review_paper(self, paper_text: str) -> dict:
@@ -33,6 +35,7 @@ class ReviewEngine:
           5) cross-wiring: methodology can upgrade stats flags
           6) citation / reference analysis
           7) plagiarism / redundancy analysis
+          8) fraud / anomaly analysis
         and returns a structured result + reasoning trace.
         """
         # --- 0) initial trace entry ---
@@ -76,6 +79,9 @@ class ReviewEngine:
 
         # 7) Plagiarism / redundancy analysis
         plagiarism_result = self.plagiarism_checker.analyze(paper_text)
+
+        # 8) Fraud / anomaly analysis
+        fraud_result = self.fraud_detector.analyze(paper_text)
 
         # --- Trace entries using final values ---
         self.trace.add_step(
@@ -121,12 +127,23 @@ class ReviewEngine:
             },
         )
 
+        self.trace.add_step(
+            "fraud_analysis",
+            f"Overall fraud suspicion score="
+            f"{fraud_result['overall_fraud_suspicion_score']:.4f}",
+            metadata={
+                "impossible_p_count": fraud_result["impossible_p_values"]["count"],
+                "cluster_ratio": fraud_result["suspicious_p_clustering"]["cluster_ratio"],
+            },
+        )
+
         return {
             "integrity": integrity_result,
             "bias": bias_result,
             "statistics": stats_result,
             "methodology": methodology_result,
             "citations": citation_result,
-            "plagiarism": plagiarism_result,    # <-- NEW
+            "plagiarism": plagiarism_result,
+            "fraud": fraud_result,
             "trace": self.trace.export(),
         }

@@ -20,8 +20,9 @@ class ReportGenerator:
         stats = result["statistics"]
         meth = result["methodology"]
         citations = result["citations"]
-        trace: List[Dict[str, Any]] = result["trace"]
         plag = result["plagiarism"]
+        fraud = result["fraud"]
+        trace: List[Dict[str, Any]] = result["trace"]
 
         # Pull some handy pieces
         word_count = integrity["word_count"]
@@ -47,10 +48,18 @@ class ReportGenerator:
         has_ref_section = citations["has_references_section"]
         est_ref_count = citations["estimated_reference_count"]
         cit_score = citations["overall_citation_quality_score"]
+
         # Plagiarism / redundancy pieces
         plag_score = plag["overall_plagiarism_suspicion_score"]
         ngram_rep = plag["ngram_repetition_ratio"]
         sent_rep = plag["repeated_sentence_ratio"]
+
+        # Fraud / anomaly pieces
+        fraud_score = fraud["overall_fraud_suspicion_score"]
+        impossible_p = fraud["impossible_p_values"]
+        cluster = fraud["suspicious_p_clustering"]
+        extreme_lang = fraud["extreme_effect_language"]
+        mismatch = fraud["mismatched_p_text"]
 
         lines: List[str] = []
 
@@ -65,7 +74,10 @@ class ReportGenerator:
             f"- **Plagiarism / redundancy suspicion score**: `{plag_score:.3f}`  "
             f"(0 = clean, 1 = highly repetitive)"
         )
-
+        lines.append(
+            f"- **Fraud / anomaly suspicion score**: `{fraud_score:.3f}`  "
+            f"(0 = clean, 1 = highly suspicious)"
+        )
         lines.append(f"- **Word count**: `{word_count}`  "
                      f"(passes minimum length: `{passes_min_len}`)")
         lines.append("")
@@ -102,7 +114,7 @@ class ReportGenerator:
         lines.append(f"- Has data sharing: `{has_data_sharing}`")
         lines.append("")
 
-        # 🔹 NEW: Citations detail
+        # Citations detail
         lines.append("## Citations & References\n")
         lines.append(f"- Has references section: `{has_ref_section}`")
         lines.append(f"- Estimated reference count: `{est_ref_count}`")
@@ -126,6 +138,7 @@ class ReportGenerator:
             f"- Overall citation quality score: `{cit_score:.3f}`"
         )
         lines.append("")
+
         # Plagiarism / redundancy detail
         lines.append("## Plagiarism / Redundancy Signals\n")
         lines.append(
@@ -145,6 +158,34 @@ class ReportGenerator:
         )
         lines.append(
             f"- Top repeated sentences: {plag['top_repeated_sentences']}"
+        )
+        lines.append("")
+
+        # Fraud / anomaly detail
+        lines.append("## Fraud / Anomaly Signals\n")
+        lines.append(
+            f"- Overall fraud / anomaly suspicion score: `{fraud_score:.3f}` "
+            f"(0 = clean, 1 = highly suspicious)"
+        )
+        lines.append(
+            f"- Impossible or extreme p-values: "
+            f"`{impossible_p['count']}` "
+            f"(examples: {impossible_p['examples']})"
+        )
+        lines.append(
+            f"- p-values clustered just below 0.05: "
+            f"`{cluster['count']}` (cluster ratio: `{cluster['cluster_ratio']:.4f}`) "
+            f"(examples: {cluster['examples']})"
+        )
+        lines.append(
+            f"- Extreme effect language occurrences: "
+            f"`{extreme_lang['count']}` "
+            f"(examples: {extreme_lang['examples']})"
+        )
+        lines.append(
+            f"- Suspected mismatched p-text sentences: "
+            f"`{mismatch['count']}` "
+            f"(examples: {mismatch['examples']})"
         )
         lines.append("")
 

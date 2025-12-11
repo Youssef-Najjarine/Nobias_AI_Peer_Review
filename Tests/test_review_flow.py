@@ -39,16 +39,18 @@ def test_review_flow_with_nonempty_text():
     assert "bias" in result
     assert "statistics" in result
     assert "methodology" in result
-    assert "citations" in result          # <-- NEW
-    assert "trace" in result
+    assert "citations" in result
     assert "plagiarism" in result
+    assert "fraud" in result
+    assert "trace" in result
 
     integrity = result["integrity"]
     bias = result["bias"]
     stats = result["statistics"]
     meth = result["methodology"]
-    citations = result["citations"]       # <-- NEW
+    citations = result["citations"]
     plag = result["plagiarism"]
+    fraud = result["fraud"]
 
     # Integrity should see non-empty text and some positive word count
     assert integrity["is_empty"] is False
@@ -77,6 +79,10 @@ def test_review_flow_with_nonempty_text():
     # Plagiarism: score should be in [0, 1]
     assert 0.0 <= plag["overall_plagiarism_suspicion_score"] <= 1.0
 
+    # Fraud: score should be in [0, 1]
+    assert 0.0 <= fraud["overall_fraud_suspicion_score"] <= 1.0
+
+
 def test_review_flow_with_empty_text():
     """
     Edge case: empty or whitespace-only text.
@@ -88,8 +94,10 @@ def test_review_flow_with_empty_text():
     integrity = result["integrity"]
     stats = result["statistics"]
     meth = result["methodology"]
-    citations = result["citations"]       # <-- NEW
+    citations = result["citations"]
     plag = result["plagiarism"]
+    fraud = result["fraud"]
+
     # Integrity: should mark as empty and have zero words
     assert integrity["is_empty"] is True
     assert integrity["word_count"] == 0
@@ -110,6 +118,11 @@ def test_review_flow_with_empty_text():
     assert plag["ngram_repetition_ratio"] == 0.0
     assert plag["repeated_sentence_ratio"] == 0.0
     assert plag["overall_plagiarism_suspicion_score"] == 0.0
+
+    # Fraud: empty text should be perfectly clean
+    assert fraud["impossible_p_values"]["count"] == 0
+    assert fraud["suspicious_p_clustering"]["count"] == 0
+    assert fraud["overall_fraud_suspicion_score"] == 0.0
 
 
 def test_methodology_rescues_stats_when_sample_sizes_present():
@@ -185,5 +198,6 @@ def test_report_generator_creates_markdown(tmp_path):
     assert "## Methodology & Design" in content
     assert "## Citations & References" in content
     assert "## Plagiarism / Redundancy Signals" in content
+    assert "## Fraud / Anomaly Signals" in content
     assert "## Integrity Checks" in content
     assert "## Reasoning Trace (first steps)" in content

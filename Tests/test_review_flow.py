@@ -42,6 +42,8 @@ def test_review_flow_with_nonempty_text():
     assert "citations" in result
     assert "plagiarism" in result
     assert "fraud" in result
+    assert "ethics" in result
+    assert "replication" in result
     assert "trace" in result
 
     integrity = result["integrity"]
@@ -51,6 +53,8 @@ def test_review_flow_with_nonempty_text():
     citations = result["citations"]
     plag = result["plagiarism"]
     fraud = result["fraud"]
+    ethics = result["ethics"]
+    replication = result["replication"]
 
     # Integrity should see non-empty text and some positive word count
     assert integrity["is_empty"] is False
@@ -79,8 +83,25 @@ def test_review_flow_with_nonempty_text():
     # Plagiarism: score should be in [0, 1]
     assert 0.0 <= plag["overall_plagiarism_suspicion_score"] <= 1.0
 
-    # Fraud: score should be in [0, 1]
+    # Fraud (Option A schema): keys exist + score in [0, 1]
+    assert "overall_fraud_suspicion_score" in fraud
+    assert "impossible_p_values" in fraud
+    assert "suspicious_p_clustering" in fraud
+    assert "extreme_effect_language" in fraud
+    assert "mismatched_p_text" in fraud
+
     assert 0.0 <= fraud["overall_fraud_suspicion_score"] <= 1.0
+
+    # Ethics: score should be in [0, 1]
+    assert 0.0 <= ethics["overall_ethics_risk_score"] <= 1.0
+
+    # Replication: score should be in [0, 1]
+    assert 0.0 <= replication["overall_replicability_score"] <= 1.0
+    assert replication["simulated_replication_outcome"] in {
+        "likely_replicable",
+        "uncertain",
+        "fragile",
+    }
 
 
 def test_review_flow_with_empty_text():
@@ -97,6 +118,8 @@ def test_review_flow_with_empty_text():
     citations = result["citations"]
     plag = result["plagiarism"]
     fraud = result["fraud"]
+    ethics = result["ethics"]
+    replication = result["replication"]
 
     # Integrity: should mark as empty and have zero words
     assert integrity["is_empty"] is True
@@ -119,10 +142,21 @@ def test_review_flow_with_empty_text():
     assert plag["repeated_sentence_ratio"] == 0.0
     assert plag["overall_plagiarism_suspicion_score"] == 0.0
 
-    # Fraud: empty text should be perfectly clean
+    # Fraud (Option A schema): empty text should be perfectly clean
     assert fraud["impossible_p_values"]["count"] == 0
     assert fraud["suspicious_p_clustering"]["count"] == 0
+    assert fraud["extreme_effect_language"]["count"] == 0
+    assert fraud["mismatched_p_text"]["count"] == 0
     assert fraud["overall_fraud_suspicion_score"] == 0.0
+
+    # Ethics: empty text should have zero risk
+    assert ethics["has_human_subjects"] is False
+    assert ethics["has_vulnerable_population"] is False
+    assert ethics["overall_ethics_risk_score"] == 0.0
+
+    # Replication: empty text should be "uncertain" with score 0
+    assert replication["overall_replicability_score"] == 0.0
+    assert replication["simulated_replication_outcome"] == "uncertain"
 
 
 def test_methodology_rescues_stats_when_sample_sizes_present():
@@ -196,8 +230,10 @@ def test_report_generator_creates_markdown(tmp_path):
     assert "## Bias & Language" in content
     assert "## Statistical Rigor" in content
     assert "## Methodology & Design" in content
+    assert "## Replicability & Robustness" in content
     assert "## Citations & References" in content
     assert "## Plagiarism / Redundancy Signals" in content
     assert "## Fraud / Anomaly Signals" in content
+    assert "## Ethics & Safety" in content
     assert "## Integrity Checks" in content
     assert "## Reasoning Trace (first steps)" in content

@@ -224,7 +224,29 @@ class ReportGenerator:
             f"- Passes minimum word length threshold: `{passes_min_len}`",
             "",
         )
+        # === Hallucination Self-Audit ===
+        hallucination_overall = result.get("hallucination_audit", {})
+        hallucination_details = result.get("hallucination_details", [])
 
+        _add("## Self-Audit: Hallucination & Overconfidence Check\n")
+        risk = hallucination_overall.get("overall_hallucination_risk", 0.0)
+        passed = hallucination_overall.get("passed_all_audits", True)
+        _add(f"- **Overall hallucination risk score**: `{risk:.4f}` (lower = more trustworthy)")
+        _add(f"- **Passed all self-audits**: `{passed}`")
+        _add(f"- **Total potential issues flagged**: `{hallucination_overall.get('total_findings', 0)}`\n")
+
+        if hallucination_details:
+            _add("### Key Findings Across Modules")
+            for audit in hallucination_details[:5]:  # Limit to avoid huge reports
+                module = audit["module"]
+                findings = audit["findings_count"]
+                high = audit["high_severity_count"]
+                _add(f"- **{module.capitalize()} module**: {findings} issues ({high} high-severity)")
+            if len(hallucination_details) > 5:
+                _add("- (Additional modules audited — full details in trace)")
+            _add("")
+        else:
+            _add("- No high-risk claims or contradictions detected across modules.\n")
         # Reasoning trace – first few steps
         _add("## Reasoning Trace (first steps)\n")
         for step in trace[:10]:

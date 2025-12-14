@@ -1,25 +1,27 @@
+# Core/reasoning_trace.py
+from __future__ import annotations
+
 from datetime import datetime
+from typing import Any, Dict, List
+
 
 class ReasoningTrace:
     """
-    Keeps a transparent record of every step the system takes
-    while reviewing a paper.
+    Transparent log of every decision step with optional confidence tagging.
     """
+    def __init__(self) -> None:
+        self._steps: List[Dict[str, Any]] = []
 
-    def __init__(self):
-        self._steps = []
-
-    def add_step(self, tag: str, description: str, metadata: dict | None = None):
-        self._steps.append({
+    def add_step(self, tag: str, description: str, metadata: Dict[str, Any] | None = None, confidence: float | None = None) -> None:
+        step = {
             "timestamp": datetime.utcnow().isoformat(),
             "tag": tag,
             "description": description,
             "metadata": metadata or {},
-        })
+        }
+        if confidence is not None:
+            step["confidence"] = round(confidence, 3)
+        self._steps.append(step)
 
-    def export(self) -> list[dict]:
-        """
-        Returns the reasoning trace as a list of dicts that can be
-        serialized to JSON.
-        """
+    def export(self) -> List[Dict[str, Any]]:
         return self._steps

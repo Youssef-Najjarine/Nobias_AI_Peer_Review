@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, Any
+from typing import Any, Dict
 
 from Core.integrity_verifier import IntegrityVerifier
 from Core.bias_detector import BiasDetector
@@ -14,6 +14,8 @@ from Core.fraud_detector import FraudDetector
 from Core.ethics_guard import EthicsGuard
 from Core.replication_simulator import ReplicationSimulator
 from Core.reasoning_trace import ReasoningTrace
+from Core.final_verdict_engine import FinalVerdictEngine
+from Core.ingestion.document import Document
 
 
 class ReviewEngine:
@@ -28,11 +30,30 @@ class ReviewEngine:
         self.ethics_guard = EthicsGuard()
         self.replication_simulator = ReplicationSimulator()
         self.trace = ReasoningTrace()
+        self.verdict_engine = FinalVerdictEngine()
 
-    def review_paper(self, paper_text: str) -> Dict[str, Any]:
+    def review_paper(self, paper: str | Document) -> Dict[str, Any]:
         # Reset trace each run
         self.trace = ReasoningTrace()
-        self.trace.add_step("load_paper", "Loaded paper text into review engine.")
+
+        # Normalize input to text (and optionally capture ingestion metadata)
+        paper_text: str
+        if isinstance(paper, Document):
+            paper_text = paper.clean_text
+            self.trace.add_step(
+                "ingestion",
+                "Using ingested Document (clean_text).",
+                metadata={
+                    "doc_type": paper.doc_type,
+                    "byte_size": paper.byte_size,
+                    "raw_char_count": len(paper.raw_text),
+                    "clean_char_count": paper.char_count,
+                    "section_count": len(paper.sections),
+                },
+            )
+        else:
+            paper_text = paper
+            self.trace.add_step("load_paper", "Loaded paper text into review engine.")
 
         # 1) Integrity
         integrity_result = self.integrity_verifier.check_basic_integrity(paper_text)
@@ -73,13 +94,13 @@ class ReviewEngine:
         # 7) Plagiarism
         plagiarism_result = self.plagiarism_checker.analyze(paper_text)
 
-        # 8) Fraud (NOW native Option A)
+        # 8) Fraud (Option A)
         fraud_result = self.fraud_detector.analyze_fraud(paper_text)
 
         # 9) Ethics
         ethics_result = self.ethics_guard.analyze(paper_text)
 
-        # 10) Replication (NOW native Option A)
+        # 10) Replication (Option A)
         replication_result = self.replication_simulator.analyze_replication(
             paper_text,
             stats=stats_result,
@@ -135,21 +156,35 @@ class ReviewEngine:
             f"Overall replicability score={replication_result['overall_replicability_score']:.4f}",
             metadata={
                 "outcome": replication_result["simulated_replication_outcome"],
-                "claims": replication_result.get("claims", {}),
-                "robustness": replication_result.get("robustness", {}),
-                "openness": replication_result.get("openness", {}),
+                "claims": replication_result["claims"],
+                "robustness": replication_result["robustness"],
+                "openness": replication_result["openness"],
             },
         )
 
-        return {
+        # ---- Assemble result (Option A) ----
+        result: Dict[str, Any] = {
             "integrity": integrity_result,
             "bias": bias_result,
             "statistics": stats_result,
             "methodology": methodology_result,
             "citations": citation_result,
             "plagiarism": plagiarism_result,
-            "fraud": fraud_result,             # native Option A
+            "fraud": fraud_result,
             "ethics": ethics_result,
-            "replication": replication_result, # native Option A
+            "replication": replication_result,
             "trace": self.trace.export(),
         }
+
+        # ---- Final Verdict (product-style) ----
+        final_verdict = self.verdict_engine.build(result)
+        result["final_verdict"] = final_verdict
+
+        self.trace.add_step(
+            "final_verdict",
+            f"Verdict={final_verdict['verdict_label']}, trust={final_verdict['overall_trust_score']:.2f}",
+            metadata={"reasons": final_verdict["reasons"]},
+        )
+        result["trace"] = self.trace.export()
+
+        return result

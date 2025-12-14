@@ -1,34 +1,45 @@
 # main.py
 
-from pathlib import Path
-
-from Core.review_engine import ReviewEngine
-from Core.report_generator import ReportGenerator
-from Utils.file_loader import load_paper
-
+from __future__ import annotations
 
 from pathlib import Path
 
+from Core.ingestion import DocumentIngestor
 from Core.review_engine import ReviewEngine
 from Core.report_generator import ReportGenerator
-from Utils.file_loader import load_paper
 
-def review_single_paper(paper_path: Path, report_generator: ReportGenerator) -> None:
+
+def review_single_paper(
+    paper_path: Path,
+    engine: ReviewEngine,
+    report_generator: ReportGenerator,
+    ingestor: DocumentIngestor,
+) -> None:
     print("=" * 80)
     print(f"Reviewing: {paper_path.name}")
     print("=" * 80)
 
-    # Use the high-level loader that understands PDFs and text
-    paper_text = load_paper(str(paper_path))
+    # --- Ingestion ---
+    doc = ingestor.ingest(paper_path)
 
-    engine = ReviewEngine()
-    result = engine.review_paper(paper_text)
+    # --- Ingestion metadata (debug-friendly, minimal) ---
+    print(
+        f"[Ingestion] "
+        f"type={doc.doc_type} | "
+        f"size={doc.byte_size:,} bytes | "
+        f"raw_chars={len(doc.raw_text):,} | "
+        f"clean_chars={len(doc.clean_text):,} | "
+        f"sections={len(doc.sections)}"
+    )
+
+    # --- Review (use clean_text for analysis) ---
+    result = engine.review_paper(doc)
 
     integrity = result["integrity"]
     bias = result["bias"]
     stats = result["statistics"]
     meth = result["methodology"]
-    replication = result.get("replication")  # may be None if not wired for some reason
+    replication = result["replication"]  # Option A schema
 
     # --- Integrity summary ---
     print("\n=== INTEGRITY RESULT ===")
@@ -60,39 +71,33 @@ def review_single_paper(paper_path: Path, report_generator: ReportGenerator) -> 
     print(f"Has preregistration: {meth['transparency']['has_preregistration']}")
     print(f"Has data sharing: {meth['transparency']['has_data_sharing']}")
 
-    # --- Replication summary ---
-    if replication is not None:
-        score = replication.get("overall_replication_score")
-        print("\n=== REPLICATION RESULT (summary) ===")
-        if score is not None:
-            print(f"Replicability score: {score:.4f}")
+    # --- Replication summary (Option A) ---
+    replication_score = replication["overall_replicability_score"]
+    simulated_outcome = replication["simulated_replication_outcome"]
+    claims = replication["claims"]
+    robustness = replication["robustness"]
+    openness = replication["openness"]
 
-        claims = replication.get("claims") or {}
-        robustness = replication.get("robustness") or {}
-        openness = replication.get("openness") or {}
-
-        if claims:
-            print(f"Has replication claims: {claims.get('has_replication_claims', False)}")
-        if robustness:
-            print(
-                "Robustness signals:",
-                {
-                    "bootstrap": robustness.get("mentions_bootstrap", False),
-                    "monte_carlo": robustness.get("mentions_monte_carlo", False),
-                    "sensitivity_analysis": robustness.get(
-                        "mentions_sensitivity_analysis", False
-                    ),
-                },
-            )
-        if openness:
-            print(
-                "Openness signals:",
-                {
-                    "open_data": openness.get("has_open_data", False),
-                    "open_code": openness.get("has_open_code", False),
-                    "prereg": openness.get("has_preregistration", False),
-                },
-            )
+    print("\n=== REPLICATION RESULT (summary) ===")
+    print(f"Replicability score: {replication_score:.4f}")
+    print(f"Simulated outcome: {simulated_outcome}")
+    print(f"Has replication claims: {claims['has_replication_claims']}")
+    print(
+        "Robustness signals:",
+        {
+            "bootstrap": robustness["mentions_bootstrap"],
+            "monte_carlo": robustness["mentions_monte_carlo"],
+            "sensitivity_analysis": robustness["mentions_sensitivity_analysis"],
+        },
+    )
+    print(
+        "Openness signals:",
+        {
+            "open_data": openness["has_open_data"],
+            "open_code": openness["has_open_code"],
+            "preregistration": openness["has_preregistration"],
+        },
+    )
 
     # --- Reasoning trace preview ---
     print("\n=== REASONING TRACE (first few steps) ===")
@@ -105,11 +110,11 @@ def review_single_paper(paper_path: Path, report_generator: ReportGenerator) -> 
     report_path = report_generator.save_markdown(paper_path.stem, result)
     print(f"\nReport saved to: {report_path}\n")
 
-def main():
-    # Base directory where main.py lives
-    base_dir = Path(__file__).parent
 
-    # List of your PDF filenames relative to the project root
+def main() -> None:
+    project_root = Path(__file__).resolve().parent
+    papers_dir = project_root / "papers"
+
     paper_files = [
         "astrophysics_example.pdf",
         "medical_example.pdf",
@@ -118,11 +123,14 @@ def main():
         "Prometheus_Prime_Paper_1.pdf",
     ]
 
+    engine = ReviewEngine()
     report_generator = ReportGenerator()
+    ingestor = DocumentIngestor()
 
     for paper_name in paper_files:
-        pdf_path = base_dir / paper_name
-        review_single_paper(pdf_path, report_generator)
+        pdf_path = papers_dir / paper_name
+        review_single_paper(pdf_path, engine, report_generator, ingestor)
+
 
 if __name__ == "__main__":
     main()

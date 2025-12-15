@@ -1,4 +1,4 @@
-# UI/dashboard/peer_review_dashboard.py
+# UI/dashboard/app.py
 from __future__ import annotations
 
 import streamlit as st

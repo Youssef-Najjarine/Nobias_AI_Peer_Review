@@ -1,0 +1,24 @@
+# Config/model_config.yaml
+# Nobias Model Configuration
+version: "1.0"
+date: "2025-12-15"
+
+models:
+  hallucination_detector:
+    enabled: true
+    high_risk_threshold: 0.4
+    contradiction_weight: 0.6
+
+  statistical_analyzer:
+    p_value_pattern: "p\\s*[<=>]\\s*0\\.\\d+"
+    rigor_bonus_for_effect_sizes: true
+
+  replication_simulator:
+    openness_weight: 0.4
+    robustness_weight: 0.3
+    prereg_bonus: 0.3
+
+paths:
+  reports_dir: "reports"
+  uploads_dir: "uploads"
+  logs_dir: "logs"

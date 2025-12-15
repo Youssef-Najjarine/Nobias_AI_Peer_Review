@@ -8,13 +8,21 @@ This __init__.py enables:
 - Clean project structure in PyCharm
 """
 
-# Import test modules to make them discoverable (optional but helpful)
-from . import test_fraud_engine
-from . import test_replication_engine
+# Import all test modules for discovery
 from . import test_review_flow
+from . import test_replication_engine
+from . import test_bias_detection
+from . import test_statistical_analysis
+from . import test_citation_validation
+from . import test_security_layer
+from . import test_hallucination_guard
 
 __all__ = [
-    "test_fraud_engine",
-    "test_replication_engine",
     "test_review_flow",
+    "test_replication_engine",
+    "test_bias_detection",
+    "test_statistical_analysis",
+    "test_citation_validation",
+    "test_security_layer",
+    "test_hallucination_guard",
 ]

@@ -1,0 +1,38 @@
+# Ethics/transparency_protocols.yaml
+# Nobias AI Peer Review — Transparency Protocols
+# These protocols are non-negotiable and enforced at every layer.
+
+protocol_version: "1.0"
+effective_date: "2025-12-15"
+
+principles:
+  - "Full reasoning trace for every decision"
+  - "No black-box processing — all rules are deterministic and auditable"
+  - "Self-audit results displayed prominently in every report"
+  - "Uncertainty is explicitly quantified and communicated"
+  - "Source code is open and verifiable"
+
+requirements:
+  reasoning_trace:
+    mandatory: true
+    format: "timestamped steps with metadata"
+    retention: "permanent"
+
+  self_audit:
+    mandatory: true
+    scope: "all major analysis modules"
+    display: "dedicated report section"
+
+  reproducibility:
+    code: "fully open-source (MIT license)"
+    environment: "no external LLM dependencies"
+    seeds: "not applicable (deterministic)"
+
+  user_disclosure:
+    - "Users must be informed that evaluation is content-only"
+    - "No author/institution data is processed"
+    - "Hallucination risk and confidence intervals are shown"
+
+enforcement:
+  violation_severity: "critical"
+  response: "immediate halt and flag in report"

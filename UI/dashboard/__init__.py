@@ -1,10 +1,13 @@
 # UI/dashboard/__init__.py
 """
-Nobias AI Peer Review Dashboard
-Interactive Streamlit front-end for paper submission and review visualization.
+Nobias AI Peer Review Dashboard submodule
+
+Contains the main dashboard page (app.py) and supporting assets/graphs.
 """
 
-# This makes the dashboard script importable if needed
-from .peer_review_dashboard import *  # noqa: F403
+# Make the main app importable if needed
+from .app import *
 
-__all__ = ["peer_review_dashboard"]
+__all__ = [
+    "app",  # Exposes the main Streamlit page
+]

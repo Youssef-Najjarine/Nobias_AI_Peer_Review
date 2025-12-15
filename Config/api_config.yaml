@@ -1,0 +1,17 @@
+# Config/api_config.yaml
+api:
+  version: "1.0"
+  host: "127.0.0.1"
+  port: 8000
+  debug: true
+  title: "Nobias AI Peer Review API"
+  rate_limit: "10/minute"
+
+auth:
+  api_key: "nobias-secret-key-2025"  # Change in production!
+  header_name: "X-API-Key"
+
+cors:
+  allow_origins:
+    - "http://localhost:8501"  # Streamlit dashboard
+    - "http://127.0.0.1:8501"

@@ -1,0 +1,30 @@
+# Config/datasets.yaml
+# Paths and metadata for data corpora
+version: "1.0"
+
+corpora:
+  scientific_corpus:
+    base_path: "Data/scientific_corpus"
+    fields:
+      - physics
+      - ai
+      - biology
+      - mathematics
+      - materials_science
+      - metaphysics_frontier
+      - anomalous_research
+    usage: "citation validation, anomaly protection"
+
+  citation_databases:
+    path: "Data/citation_databases"
+    format: "jsonl"
+    update_frequency: "monthly"
+
+  replication_datasets:
+    path: "Data/replication_datasets"
+    description: "Known replication studies for benchmarking"
+
+  review_history:
+    path: "Data/review_history"
+    retention: "permanent"
+    anonymized: true

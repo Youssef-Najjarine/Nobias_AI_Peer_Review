@@ -1,0 +1,34 @@
+# Ethics/bias_guardrails.yaml
+# Strict guardrails to prevent institutional, ideological, or prestige bias
+
+version: "1.0"
+date: "2025-12-15"
+
+prohibited_biases:
+  institutional_prestige:
+    forbidden_signals:
+      - "ivy league"
+      - "nobel"
+      - "prestigious"
+      - "world-class"
+      - "leading institution"
+    action: "flag and downweight if used as evidence"
+
+  ideological_suppression:
+    forbidden_practices:
+      - "rejection solely for being 'non-mainstream'"
+      - "penalty for 'speculative' without evidential failure"
+      - "favoring consensus over anomalous but rigorous results"
+    protection: "anomalous_research corpus explicitly supported"
+
+  field_discrimination:
+    protected_fields:
+      - "metaphysics_frontier"
+      - "anomalous_research"
+      - "theoretical breakthroughs"
+    rule: "evaluation strictly by methodological rigor and evidence"
+
+enforcement:
+  detection: "BiasDetector + language analysis"
+  response: "flag in report, no automatic rejection"
+  override: "never — human bias cannot override evidence"

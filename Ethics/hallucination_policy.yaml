@@ -1,0 +1,30 @@
+# Ethics/hallucination_policy.yaml
+# Policy for preventing and detecting AI overconfidence/hallucination
+
+policy_id: "NOBIAS-HP-01"
+version: "1.0"
+effective_date: "2025-12-15"
+
+core_rule: "Nobias must never present uncertain claims as certain."
+
+mechanisms:
+  hallucination_detector:
+    active: true
+    scope: "all module outputs and generated text"
+    triggers:
+      - high_risk_claims: ["proven", "obviously", "clearly", "without doubt"]
+      - contradictions: "significant but no effect", etc.
+
+  response:
+    low_risk: "proceed"
+    medium_risk: "flag in self-audit section"
+    high_risk: "prominent warning + reduced trust score"
+
+  transparency:
+    - "All flagged claims shown with context"
+    - "Overall hallucination risk score displayed"
+    - "Passed/failed self-audit clearly stated"
+
+  prohibition:
+    - "No external LLMs allowed in analysis path"
+    - "All reasoning must be rule-based and traceable"

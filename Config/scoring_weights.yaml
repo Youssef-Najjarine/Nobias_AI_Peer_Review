@@ -1,0 +1,23 @@
+# Config/scoring_weights.yaml
+# Dynamic scoring weights — can be tuned without code changes
+version: "1.0"
+
+weights:
+  statistics: 0.18
+  methodology: 0.18
+  replication: 0.14
+  citations: 0.12
+  bias: 0.08
+  plagiarism: 0.10
+  fraud: 0.10
+  ethics: 0.10
+
+uncertainty:
+  base_std_dev:
+    strong_signal: 0.15
+    weak_signal: 0.30
+    language_analysis: 0.25
+
+verdict_thresholds:
+  reliable: 0.70
+  mixed_low: 0.40

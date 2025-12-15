@@ -1,0 +1,24 @@
+# Config/security_config.yaml
+security:
+  version: "1.0"
+
+encryption:
+  enabled: false  # Future: encrypt review_history
+  algorithm: "AES-256-GCM"
+
+sandbox:
+  enabled: false  # Future: execute code snippets safely
+  timeout_seconds: 30
+
+audit_logs:
+  enabled: true
+  log_level: "INFO"
+  retention_days: 365
+
+tamper_detection:
+  enabled: true
+  hash_reports: true
+
+provenance:
+  track_inputs: true
+  store_hashes: true
